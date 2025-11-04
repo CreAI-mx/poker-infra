@@ -1,0 +1,252 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eca-services
+  labels:
+    name: eca-services
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eca-backend-service
+  namespace: eca-services
+  labels:
+    app: eca-backend
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3001
+    targetPort: 3001
+    protocol: TCP
+    name: http
+  selector:
+    app: eca-backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eca-frontend-service
+  namespace: eca-services
+  labels:
+    app: eca-frontend
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: eca-frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eca-backend-deployment
+  namespace: eca-services
+  labels:
+    app: eca-backend
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eca-backend
+  template:
+    metadata:
+      labels:
+        app: eca-backend
+        component: backend
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: eca-backend
+        image: "ghcr.io/manuellopez-creai/eca-backend:v0.1"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3001
+          name: http
+        env:
+        # Database Configuration
+        - name: MONGODB_HOST
+          value: ""
+        - name: MONGODB_PORT
+          value: ""
+        - name: MONGODB_DATABASE
+          value: ""
+        - name: MONGODB_USER
+          value: ""
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: eca-backend-secrets
+              key: MONGODB_PASSWORD
+        
+        # CORS Configuration
+        - name: ORIGINS
+          value: ""
+        
+        # ChromaDB Configuration
+        - name: CHROMA_HOST
+          value: ""
+        - name: CHROMA_PORT
+          value: ""
+        - name: CHROMADB_COLLECTION
+          value: ""
+        
+        # LLM Configuration
+        - name: LLM_URL
+          value: ""
+        
+        # Embedding Service Configuration
+        - name: HTTP_EMBEDDING_SERVER_URL
+          value: ""
+        
+        # SMTP Configuration
+        - name: SMTP_HOST
+          value: ""
+        - name: SMTP_PORT
+          value: ""
+        - name: SMTP_USER
+          value: ""
+        - name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: eca-backend-secrets
+              key: SMTP_PASS
+        
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eca-frontend-deployment
+  namespace: eca-services
+  labels:
+    app: eca-frontend
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eca-frontend
+  template:
+    metadata:
+      labels:
+        app: eca-frontend
+        component: frontend
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: eca-frontend
+        image: "ghcr.io/manuellopez-creai/eca-frontend:v0.1"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        # Frontend Configuration
+        - name: REACT_APP_API_HOST
+          value: ""
+        - name: REACT_APP_WS_URL
+          value: ""
+        - name: REACT_APP_RABBITMQ_WEBSOCKET_URL
+          value: ""
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eca-ingress
+  namespace: eca-services
+  labels:
+    app: eca-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+  - host: eca.local  # Change this to your actual domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: eca-backend-service
+            port:
+              number: 3001
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: eca-frontend-service
+            port:
+              number: 3000
