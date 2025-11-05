@@ -1,0 +1,102 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/config:/data/configdb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secure_password
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --username admin --password secure_password --authenticationDatabase admin --host localhost --port 27017 --eval 'db.runCommand({ ping: 1 }).ok' | grep 1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  chromadb:
+    image: chromadb/chroma:1.1.0
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v2/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend:
+    image: ghcr.io/creai-mx/eca-backend:v0.1
+    environment:
+      - NODE_ENV=production
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_DATABASE=eca_db
+      - MONGODB_USER=admin
+      - MONGODB_PASSWORD=secure_password
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMADB_COLLECTION=vector_collection
+      - CHROMADB_DEFAULT_URI=http://chromadb:8000
+      - ORIGINS=http://localhost:3000
+      - LLM_URL=http://host.docker.internal:8081
+      - HTTP_EMBEDDING_SERVER_URL=http://host.docker.internal:8082
+      - SMTP_HOST=localhost
+      - SMTP_PORT=1025
+      - SMTP_USER=noreply@silia.test
+      - SMTP_PASS=secure_password
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_started
+      chromadb:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    image: ghcr.io/creai-mx/eca-frontend:v0.1
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_HOST=http://localhost:3001
+      - REACT_APP_WS_URL=ws://localhost:3001
+      - REACT_APP_RABBITMQ_WEBSOCKET_URL=ws://localhost:15674/ws
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  chromadb_data:
