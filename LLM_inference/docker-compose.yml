@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  qwen-inference:
+    image: vllm/vllm-openai:latest
+    container_name: qwen-inference
+    command:
+      - "--model"
+      - "Qwen/Qwen2.5-VL-7B-Instruct"
+      - "--trust-remote-code"
+      - "--max-model-len"
+      - "16384"
+      - "--enable-auto-tool-choice"
+      - "--tool-call-parser"
+      - "hermes"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+    ports:
+      - "8081:8000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - qwen-model-cache:/data
+      - shm:/dev/shm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 24Gi
+          cpus: '6'
+        reservations:
+          memory: 12Gi
+          cpus: '3'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    restart: unless-stopped
+    shm_size: 24gb
+
+  embeddings-inference:
+    image: ghcr.io/huggingface/text-embeddings-inference:cuda-latest
+    container_name: embeddings-inference
+    command:
+      - "--model-id"
+      - "sentence-transformers/all-MiniLM-L6-v2"
+      - "--hostname"
+      - "0.0.0.0"
+      - "--port"
+      - "8001"
+    ports:
+      - "8082:8001"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - embeddings-model-cache:/tmp/embeddings-data
+      - shm:/dev/shm
+    deploy:
+      resources:
+        limits:
+          memory: 2Gi
+          cpus: '1'
+        reservations:
+          memory: 1Gi
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+    shm_size: 24gb
+
+volumes:
+  qwen-model-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/qwen-model-cache
+  embeddings-model-cache:
+    driver: local
+  shm:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=24g
+
+networks:
+  default:
+    name: qwen-inference-network
+
