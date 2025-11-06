@@ -71,19 +71,13 @@ spec:
           name: http
         env:
         # Database Configuration
-        - name: MONGODB_HOST
-          value: ""
-        - name: MONGODB_PORT
-          value: ""
-        - name: MONGODB_DATABASE
-          value: ""
-        - name: MONGODB_USER
-          value: ""
-        - name: MONGODB_PASSWORD
+        - name: MONGODB_URI
           valueFrom:
             secretKeyRef:
-              name: eca-backend-secrets
-              key: MONGODB_PASSWORD
+              name: mongodb-creai-cs
+              key: connectionString.standard
+        - name: MONGODB_DATABASE
+          value: ""
         
         # CORS Configuration
         - name: ORIGINS
