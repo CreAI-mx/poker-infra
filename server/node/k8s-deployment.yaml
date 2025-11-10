@@ -163,17 +163,19 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-frontend
-        image: "ghcr.io/creai-mx/eca-frontend:v0.1"
+        image: "ghcr.io/creai-mx/eca-frontend:v0.2"
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
           name: http
         env:
         # Frontend Configuration
+        - name: PUBLIC_URL
+          value: "http://eca.local"
         - name: REACT_APP_API_HOST
-          value: ""
+          value: "http://eca.local/api"
         - name: REACT_APP_WS_URL
-          value: ""
+          value: "ws://eca.local/api"
         - name: REACT_APP_RABBITMQ_WEBSOCKET_URL
           value: ""
         
@@ -217,12 +219,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: eca-ingress
+  name: eca-ingress-backend
   namespace: eca-services
   labels:
-    app: eca-services
+    app: eca-backend
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
@@ -230,17 +232,34 @@ spec:
   - host: eca.local  # Change this to your actual domain
     http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: eca-backend-service
             port:
               number: 3001
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: eca-frontend-service
-            port:
-              number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eca-ingress-frontend
+  namespace: eca-services
+  labels:
+    app: eca-frontend
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+  - host: eca.local # Change this to your actual domain
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: eca-frontend-service
+              port:
+                number: 3000
