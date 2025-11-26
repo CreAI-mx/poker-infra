@@ -84,25 +84,61 @@ A continuación se muestra una tabla con las variables de entorno necesarias par
 kubectl apply -f k8s-deployment.yaml
 ```
 
-**Nota sobre Ingress**: El despliegue incluye dos recursos Ingress separados:
-- **eca-ingress-backend**: Maneja las rutas `/api/*` y las redirige al servicio backend en el puerto 3001
-- **eca-ingress-frontend**: Maneja la ruta raíz `/` y la redirige al servicio frontend en el puerto 3000
+**Nota sobre Ingress**: El despliegue incluye dos recursos Ingress separados que implementan una arquitectura de acceso público y privado:
 
-**⚠️ Importante - Configuración del dominio**: Ambos Ingress están configurados para el host `eca.local` por defecto. **Debes cambiar este dominio según tu necesidad** en:
-- Los recursos Ingress (busca `host: eca.local` en `k8s-deployment.yaml`)
-- Las variables de entorno del frontend (líneas 173-178 en `k8s-deployment.yaml`)
+#### Arquitectura de Dominios Público/Privado
 
-Si usas `eca.local` para desarrollo local, asegúrate de tener este dominio configurado en tu archivo `/etc/hosts` o en tu DNS local:
+La aplicación utiliza dos dominios diferentes para separar el acceso público del privado:
 
+1. **`eca.local`** - Dominio privado (acceso interno/autenticado)
+   - Acceso completo al frontend en la ruta raíz `/`
+   - Usado para usuarios autenticados o acceso interno
+
+2. **`eca.public`** - Dominio público (acceso externo)
+   - Acceso limitado al frontend solo en la ruta `/lib` (biblioteca pública)
+   - Acceso completo a la API backend en `/api/*`
+
+#### Configuración de Ingress
+
+- **eca-ingress-backend**: 
+  - Host: `eca.public`
+  - Ruta: `/api(/|$)(.*)` → redirige al servicio backend (puerto 3001)
+  - Acceso público a la API
+
+- **eca-ingress-frontend**: 
+  - Host `eca.local`: Ruta `/` → acceso completo al frontend (puerto 3000)
+  - Host `eca.public`: Ruta `/lib` → acceso público limitado al frontend (puerto 3000)
+  - Permite servir contenido público (como bibliotecas) sin exponer toda la aplicación
+
+**⚠️ Importante - Configuración del dominio**: Los dominios `eca.local` y `eca.public` deben configurarse según tu necesidad:
+
+1. **Para desarrollo local**, agrega ambos dominios a tu archivo `/etc/hosts`:
 ```bash
-# Agregar entrada en /etc/hosts (Linux/Mac)
+# Agregar entradas en /etc/hosts (Linux/Mac)
 echo "127.0.0.1 eca.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 eca.public" | sudo tee -a /etc/hosts
 ```
 
-**Variables de entorno del frontend configuradas** (usando `eca.local` como ejemplo - cambiar según necesidad):
-- `PUBLIC_URL`: `http://eca.local`
-- `REACT_APP_API_HOST`: `http://eca.local/api`
-- `REACT_APP_WS_URL`: `ws://eca.local/api`
+2. **Para producción**, configura los dominios en tu DNS:
+   - `eca.local` → IP privada o VPN (acceso restringido)
+   - `eca.public` → IP pública (acceso público)
+
+3. **Actualiza las variables de entorno** en `k8s-deployment.yaml`:
+   - Backend Ingress: línea 232 (`host: eca.public`)
+   - Frontend Ingress: líneas 256 y 266 (`host: eca.local` y `host: eca.public`)
+   - Variables del frontend: líneas 173-178
+
+**Variables de entorno del frontend configuradas**:
+- `PUBLIC_URL`: `http://eca.local` (URL base para acceso privado)
+- `REACT_APP_API_HOST`: `http://eca.public/api` (API accesible públicamente)
+- `REACT_APP_WS_URL`: `ws://eca.public/api` (WebSocket accesible públicamente)
+
+#### ¿Por qué esta configuración?
+
+Esta separación permite:
+- **Seguridad**: El acceso completo a la aplicación (`eca.local`) puede estar restringido a una red privada o VPN
+- **Funcionalidad pública**: La API y bibliotecas públicas (`/lib`) están disponibles en `eca.public` para integraciones externas
+- **Flexibilidad**: Diferentes políticas de seguridad y acceso según el dominio
 
 ### 4. Verificar el Despliegue
 

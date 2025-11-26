@@ -173,9 +173,9 @@ spec:
         - name: PUBLIC_URL
           value: "http://eca.local"
         - name: REACT_APP_API_HOST
-          value: "http://eca.local/api"
+          value: "http://eca.public/api"
         - name: REACT_APP_WS_URL
-          value: "ws://eca.local/api"
+          value: "ws://eca.public/api"
         - name: REACT_APP_RABBITMQ_WEBSOCKET_URL
           value: ""
         
@@ -229,7 +229,7 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
-  - host: eca.local  # Change this to your actual domain
+  - host: eca.public  # Change this to your actual domain
     http:
       paths:
       - path: /api(/|$)(.*)
@@ -248,7 +248,6 @@ metadata:
   labels:
     app: eca-frontend
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
@@ -257,6 +256,16 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: eca-frontend-service
+              port:
+                number: 3000
+  - host: eca.public # Change this to your actual domain
+    http:
+      paths:
+        - path: /lib
           pathType: Prefix
           backend:
             service:
