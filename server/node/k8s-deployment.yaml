@@ -163,7 +163,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-frontend
-        image: "ghcr.io/creai-mx/eca-frontend:v0.2"
+        image: "ghcr.io/creai-mx/eca-frontend:v0.3"
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -172,6 +172,8 @@ spec:
         # Frontend Configuration
         - name: PUBLIC_URL
           value: "http://eca.local"
+        - name: WIDGET_URL
+          value: "http://eca.public"
         - name: REACT_APP_API_HOST
           value: "http://eca.public/api"
         - name: REACT_APP_WS_URL
