@@ -27,6 +27,11 @@ kubectl create secret generic mongodb-creai-cs \
   --from-literal=connectionString.standard="uri_mongo" \
   -n eca-services
 ```
+```bash
+kubectl create secret generic rabbitmq-creai-cs \
+  --from-literal=connectionString.standard="amqp://user:pass@192.168.1.59:5672" \
+  -n eca-services
+```
 
 **Nota**: Si cambiaste el namespace, reemplaza `eca-services` con tu namespace en todos los comandos.
 
@@ -65,10 +70,12 @@ A continuación se muestra una tabla con las variables de entorno necesarias par
 | **SMTP_PORT**                   | Puerto del servidor SMTP                                                        | `1025`                               |
 | **SMTP_USER**                   | Usuario para autenticación SMTP                                                 | `noreply@silia.test`                 |
 | **SMTP_PASS**                   | Contraseña SMTP (obtenida del secret `eca-backend-secrets`)                      | _(from secret)_                      |
+| **EMAIL_FROM**                  | Dirección de correo electrónico remitente para envío de emails                    | `noreply@silia.test`                  |
+| **RABBITMQ_URI**                | URI de conexión a RabbitMQ (obtenida del secret `rabbitmq-creai-cs`)            | _(from secret)_                      |
 | **PUBLIC_URL**                   | URL pública del frontend                                                          | `http://eca.local`                    |
 | **REACT_APP_API_HOST**          | URL base de la API backend (Node.js)                                             | `http://eca.local/api`                |
 | **REACT_APP_WS_URL**            | URL del servidor WebSocket (Node.js backend)                                     | `ws://eca.local/api`                  |
-| **REACT_APP_RABBITMQ_WEBSOCKET_URL** | URL del proxy WebSocket de RabbitMQ                                        | `ws://127.0.0.1:15674/ws`                 |
+| **REACT_APP_APP_DOMAIN**        | Dominio de la aplicación para el frontend                                         | `eca.local`                           |
 
 **Notas importantes**:
 - Las variables marcadas como _(from secret)_ deben ser definidas mediante el Secret de Kubernetes y no directamente como texto plano en el manifiesto.

@@ -64,7 +64,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-backend
-        image: "ghcr.io/creai-mx/eca-backend:v0.3"
+        image: "ghcr.io/creai-mx/eca-backend:v0.4"
         imagePullPolicy: Always
         ports:
         - containerPort: 3001
@@ -106,12 +106,19 @@ spec:
           value: ""
         - name: SMTP_USER
           value: ""
+        - name: EMAIL_FROM
+          value: ""
         - name: SMTP_PASS
           valueFrom:
             secretKeyRef:
               name: eca-backend-secrets
               key: SMTP_PASS
-        
+        # RabbitMQ Configuration
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-creai-cs
+              key: connectionString.standard
         resources:
           requests:
             memory: "512Mi"
@@ -163,7 +170,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-frontend
-        image: "ghcr.io/creai-mx/eca-frontend:v0.3"
+        image: "ghcr.io/creai-mx/eca-frontend:v0.4"
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -178,9 +185,8 @@ spec:
           value: "http://eca.public/api"
         - name: REACT_APP_WS_URL
           value: "ws://eca.public/api"
-        - name: REACT_APP_RABBITMQ_WEBSOCKET_URL
-          value: ""
-        
+        - name: REACT_APP_APP_DOMAIN
+          value: "eca.local"
         resources:
           requests:
             memory: "128Mi"

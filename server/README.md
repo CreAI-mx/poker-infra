@@ -36,9 +36,15 @@ A continuación se muestra una tabla con las variables de entorno necesarias. Lo
 | **ORIGINS**                     | Lista de dominios permitidos para peticiones CORS                              | `http://localhost:3000`            |
 | **LLM_URL**                     | URL del endpoint del motor de inferencia (LLM)                                   | `http://host.docker.internal:8081` |
 | **HTTP_EMBEDDING_SERVER_URL**   | URL del motor de embeddings (texto a vectores)                                  | `http://host.docker.internal:8082` |
+| **SMTP_HOST**                   | Servidor SMTP para envío de emails                                               | `localhost`                         |
+| **SMTP_PORT**                   | Puerto del servidor SMTP                                                         | `1025`                              |
+| **SMTP_USER**                   | Usuario para autenticación SMTP                                                 | `noreply@silia.test`                |
+| **SMTP_PASS**                   | Contraseña SMTP                                                                  | `secure_password`                   |
+| **EMAIL_FROM**                  | Dirección de correo electrónico remitente para envío de emails                    | `noreply@silia.test`                |
+| **RABBITMQ_URI**                | URI de conexión a RabbitMQ (formato: amqp://user:pass@host:port)                 | `amqp://user:pass@192.168.1.59:5672` |
 | **REACT_APP_API_HOST**          | URL base de la API backend (Node.js)                                             | `http://localhost:3001`            |
 | **REACT_APP_WS_URL**            | URL del servidor WebSocket (Node.js backend)                                     | `ws://localhost:3001`               |
-| **REACT_APP_RABBITMQ_WEBSOCKET_URL** | URL del proxy WebSocket de RabbitMQ                                        | `ws://localhost:15674/ws`          |
+| **REACT_APP_APP_DOMAIN**        | Dominio de la aplicación para el frontend                                         | `localhost`                         |
 
 **Notas importantes**:
 - Para conectar con servicios LLM externos (como los de `LLM_inference`), usa `http://host.docker.internal:8081` para acceder al host desde el contenedor.
