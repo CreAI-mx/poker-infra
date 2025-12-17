@@ -35,6 +35,26 @@ services:
       retries: 3
       start_period: 40s
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=pass
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   backend:
     image: ghcr.io/creai-mx/eca-backend:v0.1
     environment:
@@ -55,6 +75,9 @@ services:
       - SMTP_PORT=1025
       - SMTP_USER=noreply@silia.test
       - SMTP_PASS=secure_password
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_USER=user
+      - RABBITMQ_PASS=pass
     ports:
       - "3001:3001"
     networks:
@@ -64,6 +87,8 @@ services:
       mongodb:
         condition: service_started
       chromadb:
+        condition: service_started
+      rabbitmq:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
@@ -100,3 +125,4 @@ networks:
 volumes:
   mongodb_data:
   chromadb_data:
+  rabbitmq_data:

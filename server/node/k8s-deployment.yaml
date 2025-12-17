@@ -114,11 +114,18 @@ spec:
               name: eca-backend-secrets
               key: SMTP_PASS
         # RabbitMQ Configuration
-        - name: RABBITMQ_URI
+        - name: RABBITMQ_URL
+          value: ""
+        - name: RABBITMQ_USER
           valueFrom:
             secretKeyRef:
               name: rabbitmq-creai-cs
-              key: connectionString.standard
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-creai-cs
+              key: RABBITMQ_PASS
         resources:
           requests:
             memory: "512Mi"

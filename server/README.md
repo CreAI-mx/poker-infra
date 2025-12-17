@@ -41,7 +41,9 @@ A continuación se muestra una tabla con las variables de entorno necesarias. Lo
 | **SMTP_USER**                   | Usuario para autenticación SMTP                                                 | `noreply@silia.test`                |
 | **SMTP_PASS**                   | Contraseña SMTP                                                                  | `secure_password`                   |
 | **EMAIL_FROM**                  | Dirección de correo electrónico remitente para envío de emails                    | `noreply@silia.test`                |
-| **RABBITMQ_URI**                | URI de conexión a RabbitMQ (formato: amqp://user:pass@host:port)                 | `amqp://user:pass@192.168.1.59:5672` |
+| **RABBITMQ_URL**                | URL de conexión a RabbitMQ (sin credenciales)                                     | `amqp://rabbitmq:5672`               |
+| **RABBITMQ_USER**               | Usuario para autenticación en RabbitMQ                                            | `user`                               |
+| **RABBITMQ_PASS**               | Contraseña para autenticación en RabbitMQ                                         | `pass`                               |
 | **REACT_APP_API_HOST**          | URL base de la API backend (Node.js)                                             | `http://localhost:3001`            |
 | **REACT_APP_WS_URL**            | URL del servidor WebSocket (Node.js backend)                                     | `ws://localhost:3001`               |
 | **REACT_APP_APP_DOMAIN**        | Dominio de la aplicación para el frontend                                         | `localhost`                         |
@@ -205,6 +207,8 @@ docker-compose exec frontend sh
 - **3001**: Backend (Node.js)
 - **27017**: MongoDB
 - **8000**: ChromaDB
+- **5672**: RabbitMQ (AMQP)
+- **15672**: RabbitMQ Management UI
 
 ## 🔒 Seguridad
 

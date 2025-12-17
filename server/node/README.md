@@ -29,7 +29,8 @@ kubectl create secret generic mongodb-creai-cs \
 ```
 ```bash
 kubectl create secret generic rabbitmq-creai-cs \
-  --from-literal=connectionString.standard="amqp://user:pass@192.168.1.59:5672" \
+  --from-literal=RABBITMQ_USER="user" \
+  --from-literal=RABBITMQ_PASS="pass" \
   -n eca-services
 ```
 
@@ -71,7 +72,9 @@ A continuación se muestra una tabla con las variables de entorno necesarias par
 | **SMTP_USER**                   | Usuario para autenticación SMTP                                                 | `noreply@silia.test`                 |
 | **SMTP_PASS**                   | Contraseña SMTP (obtenida del secret `eca-backend-secrets`)                      | _(from secret)_                      |
 | **EMAIL_FROM**                  | Dirección de correo electrónico remitente para envío de emails                    | `noreply@silia.test`                  |
-| **RABBITMQ_URI**                | URI de conexión a RabbitMQ (obtenida del secret `rabbitmq-creai-cs`)            | _(from secret)_                      |
+| **RABBITMQ_URL**                | URL de conexión a RabbitMQ (sin credenciales)                                      | `amqp://127.0.0.1:5672`            |
+| **RABBITMQ_USER**               | Usuario para autenticación en RabbitMQ (obtenido del secret `rabbitmq-creai-cs`)  | _(from secret)_                      |
+| **RABBITMQ_PASS**               | Contraseña para autenticación en RabbitMQ (obtenida del secret `rabbitmq-creai-cs`) | _(from secret)_                      |
 | **PUBLIC_URL**                   | URL pública del frontend                                                          | `http://eca.local`                    |
 | **REACT_APP_API_HOST**          | URL base de la API backend (Node.js)                                             | `http://eca.local/api`                |
 | **REACT_APP_WS_URL**            | URL del servidor WebSocket (Node.js backend)                                     | `ws://eca.local/api`                  |
