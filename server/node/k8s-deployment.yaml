@@ -64,7 +64,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-backend
-        image: "ghcr.io/creai-mx/eca-backend:v0.5"
+        image: "ghcr.io/creai-mx/eca-backend:v0.6"
         imagePullPolicy: Always
         ports:
         - containerPort: 3001
@@ -177,7 +177,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-frontend
-        image: "ghcr.io/creai-mx/eca-frontend:v0.4"
+        image: "ghcr.io/creai-mx/eca-frontend:v0.5"
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
