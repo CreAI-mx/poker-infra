@@ -33,8 +33,15 @@ kubectl create secret generic rabbitmq-creai-cs \
   --from-literal=RABBITMQ_PASS="pass" \
   -n eca-services
 ```
+```bash
+kubectl create secret generic redis-creai-cs \
+  --from-literal=REDIS_URL="redis://:STRONG_PASS@127.0.0.1:6379" \
+  -n eca-services
+```
 
 **Nota**: Si cambiaste el namespace, reemplaza `eca-services` con tu namespace en todos los comandos.
+
+**Nota sobre Redis**: Asegúrate de desplegar Redis antes de desplegar la aplicación. Consulta la documentación en `server/Redis/README.md` para más detalles sobre el despliegue de Redis.
 
 **Alternativa**: Si prefieres usar el archivo YAML:
 
@@ -75,13 +82,19 @@ A continuación se muestra una tabla con las variables de entorno necesarias par
 | **RABBITMQ_URL**                | URL de conexión a RabbitMQ (sin credenciales)                                      | `amqp://127.0.0.1:5672`            |
 | **RABBITMQ_USER**               | Usuario para autenticación en RabbitMQ (obtenido del secret `rabbitmq-creai-cs`)  | _(from secret)_                      |
 | **RABBITMQ_PASS**               | Contraseña para autenticación en RabbitMQ (obtenida del secret `rabbitmq-creai-cs`) | _(from secret)_                      |
+| **REDIS_URL**                   | URL de conexión a Redis con autenticación (obtenida del secret `redis-creai-cs`)    | `redis://:STRONG_PASS@127.0.0.1:6379` (from secret) |
+| **SHARED_WEBSOCKET_ENDPOINT**   | Endpoint HTTP del WebSocket compartido (Backend)                                  | `http://127.0.0.1:3001`               |
 | **PUBLIC_URL**                   | URL pública del frontend                                                          | `http://eca.local`                    |
 | **REACT_APP_API_HOST**          | URL base de la API backend (Node.js)                                             | `http://eca.local/api`                |
 | **REACT_APP_WS_URL**            | URL del servidor WebSocket (Node.js backend)                                     | `ws://eca.local/api`                  |
 | **REACT_APP_APP_DOMAIN**        | Dominio de la aplicación para el frontend                                         | `eca.local`                           |
+| **WS_SHARED_URL**               | URL del WebSocket compartido (Frontend)                                           | `ws://127.0.0.1:3001`                 |
 
 **Notas importantes**:
 - Las variables marcadas como _(from secret)_ deben ser definidas mediante el Secret de Kubernetes y no directamente como texto plano en el manifiesto.
+- **REDIS_URL**: Debe incluir la contraseña en el formato `redis://:PASSWORD@HOST:PORT`. Esta variable se obtiene del secret `redis-creai-cs`.
+- **SHARED_WEBSOCKET_ENDPOINT**: Endpoint HTTP del WebSocket compartido usado por el backend. Por defecto apunta a `http://127.0.0.1:3001`.
+- **WS_SHARED_URL**: URL del WebSocket compartido usado por el frontend. Por defecto apunta a `ws://127.0.0.1:3001`.
 - **Dominio configurable**: El dominio `eca.local` usado en las variables de entorno del frontend (`PUBLIC_URL`, `REACT_APP_API_HOST`, `REACT_APP_WS_URL`) y en los recursos Ingress debe cambiarse según tu necesidad. Reemplázalo con tu dominio real en:
   - Las variables de entorno del deployment del frontend (líneas 173-178 en `k8s-deployment.yaml`)
   - Los recursos Ingress (líneas 232 y 256 en `k8s-deployment.yaml`)
