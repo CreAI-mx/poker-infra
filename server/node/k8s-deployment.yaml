@@ -130,11 +130,15 @@ spec:
 
         # Redis Configuration
         - name: REDIS_URL
+          value: ""
+        - name: REDIS_USER
+          value: "default"
+        - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: redis-creai-cs
-              key: REDIS_URL
-              
+              key: REDIS_PASSWORD
+
         # Shared WebSocket Configuration
         - name: SHARED_WEBSOCKET_ENDPOINT
           value: ""
