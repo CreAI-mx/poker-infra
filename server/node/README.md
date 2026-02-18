@@ -85,18 +85,19 @@ A continuación se muestra una tabla con las variables de entorno necesarias par
 | **REDIS_URL**                   | URL de conexión a Redis (host:puerto, sin contraseña)                                | `redis://127.0.0.1:6379`                         |
 | **REDIS_USER**                  | Usuario para autenticación en Redis                                                  | `default`                                             |
 | **REDIS_PASSWORD**              | Contraseña de Redis (obtenida del secret `redis-creai-cs`)                           | _(from secret)_                                      |
-| **SHARED_WEBSOCKET_ENDPOINT**   | Endpoint HTTP del WebSocket compartido (Backend)                                  | `http://127.0.0.1:3001`               |
+| **SHARED_WEBSOCKET_ENDPOINT**   | Endpoint HTTP del WebSocket del backend para comunicación interna entre componentes (arquitectura basada en eventos). En K8s usar la URL interna del servicio. | `http://eca-backend-service:3001` (K8s) / `http://127.0.0.1:3001` (local) |
 | **PUBLIC_URL**                   | URL pública del frontend                                                          | `http://eca.local`                    |
 | **REACT_APP_API_HOST**          | URL base de la API backend (Node.js)                                             | `http://eca.local/api`                |
 | **REACT_APP_WS_URL**            | URL del servidor WebSocket (Node.js backend)                                     | `ws://eca.local/api`                  |
+| **REACT_APP_WS_SHARED_URL**     | URL del WebSocket del backend usada por el frontend. Debe apuntar a lo mismo que **REACT_APP_WS_URL**. | `ws://eca.public/api` (K8s) / `ws://127.0.0.1:3001` (local) |
 | **REACT_APP_APP_DOMAIN**        | Dominio de la aplicación para el frontend                                         | `eca.local`                           |
-| **WS_SHARED_URL**               | URL del WebSocket compartido (Frontend)                                           | `ws://127.0.0.1:3001`                 |
+| **WS_SHARED_URL**               | URL del WebSocket compartido (Frontend). Misma finalidad que **REACT_APP_WS_SHARED_URL**. | `ws://eca.public/api`                 |
 
 **Notas importantes**:
 - Las variables marcadas como _(from secret)_ deben ser definidas mediante el Secret de Kubernetes y no directamente como texto plano en el manifiesto.
 - **REDIS_URL** y **REDIS_USER** se configuran en el deployment. **REDIS_PASSWORD** debe estar en el secret `redis-creai-cs`; créalo antes del despliegue (ver paso 1).
-- **SHARED_WEBSOCKET_ENDPOINT**: Endpoint HTTP del WebSocket compartido usado por el backend. Por defecto apunta a `http://127.0.0.1:3001`.
-- **WS_SHARED_URL**: URL del WebSocket compartido usado por el frontend. Por defecto apunta a `ws://127.0.0.1:3001`.
+- **SHARED_WEBSOCKET_ENDPOINT** (Backend): Endpoint HTTP del WebSocket para que los componentes del backend se comuniquen entre sí (eventos). Es comunicación interna; en Kubernetes usa la URL del servicio, p. ej. `http://eca-backend-service:3001`. En local, `http://127.0.0.1:3001`.
+- **REACT_APP_WS_SHARED_URL** y **WS_SHARED_URL** (Frontend): URL del WebSocket del backend a la que se conecta el frontend. Debe coincidir con **REACT_APP_WS_URL** (mismo destino, distinto nombre según uso en la app).
 - **Dominio configurable**: El dominio `eca.local` usado en las variables de entorno del frontend (`PUBLIC_URL`, `REACT_APP_API_HOST`, `REACT_APP_WS_URL`) y en los recursos Ingress debe cambiarse según tu necesidad. Reemplázalo con tu dominio real en:
   - Las variables de entorno del deployment del frontend (líneas 173-178 en `k8s-deployment.yaml`)
   - Los recursos Ingress (líneas 232 y 256 en `k8s-deployment.yaml`)
