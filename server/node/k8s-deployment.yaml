@@ -41,6 +41,19 @@ spec:
   selector:
     app: eca-frontend
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: eca-backend-uploads-pvc
+  namespace: eca-services
+  labels:
+    app: eca-backend
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,11 +73,20 @@ spec:
         app: eca-backend
         component: backend
     spec:
+      securityContext:
+        fsGroup: 1000
       imagePullSecrets:
       - name: ghcr-secret
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: eca-backend-uploads-pvc
       containers:
       - name: eca-backend
-        image: "ghcr.io/creai-mx/eca-backend:v1.0.2"
+        image: "ghcr.io/creai-mx/eca-backend:v1.0.5"
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
         imagePullPolicy: Always
         ports:
         - containerPort: 3001
@@ -147,7 +169,7 @@ spec:
             memory: "512Mi"
             cpu: "200m"
           limits:
-            memory: "2Gi"
+            memory: "4Gi"
             cpu: "1000m"
         
         # Health checks
@@ -193,7 +215,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: eca-frontend
-        image: "ghcr.io/creai-mx/eca-frontend:v1.0.1"
+        image: "ghcr.io/creai-mx/eca-frontend:v1.0.3"
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
